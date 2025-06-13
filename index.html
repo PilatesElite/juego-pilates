@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz de Pilates | Pilates Elite</title>
+    <style>
+        :root {
+            --oro-frances: #C9B037;
+            --oro-claro: #E6D58B;
+            --negro: #000000;
+            --negro-mate: #1A1A1A;
+        }
+        body {
+            font-family: 'Playfair Display', serif;
+            background-color: var(--negro);
+            color: var(--oro-frances);
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: var(--negro);
+            border-radius: 12px;
+            border: 2px solid var(--oro-frances);
+        }
+        h1, h2 {
+            color: var(--oro-frances);
+            letter-spacing: 1px;
+        }
+        #logo {
+            max-width: 180px;
+            margin: 0 auto 25px;
+        }
+        button {
+            background: var(--oro-frances);
+            color: var(--negro);
+            border: none;
+            padding: 14px 28px;
+            margin: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Montserrat', sans-serif;
+        }
+        button:hover {
+            background: var(--oro-claro);
+            transform: translateY(-2px);
+        }
+        .option-btn {
+            background: var(--oro-frances);
+            color: var(--negro);
+            padding: 12px;
+            margin: 10px auto;
+            width: 80%;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+        .option-btn:hover {
+            background: var(--oro-claro);
+            transform: scale(1.02);
+        }
+        #question {
+            font-size: 18px;
+            margin: 25px 0;
+            padding: 15px;
+            color: white;
+            background-color: var(--negro-mate);
+            border-radius: 8px;
+        }
+        .lives {
+            color: #FF6B6B;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .score {
+            color: var(--oro-frances);
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        #ranking {
+            background-color: var(--negro-mate);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px auto;
+            max-width: 400px;
+            color: white;
+        }
+        .input-field {
+            padding: 12px;
+            width: 70%;
+            border: 1px solid var(--oro-frances);
+            background-color: var(--negro);
+            color: white;
+            font-size: 16px;
+            border-radius: 6px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .hidden {
+            display: none;
+        }
+        #feedback {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #FF6B6B;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 100;
+            display: none;
+            font-weight: bold;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@500;700&display=swap');
+    </style>
+</head>
+<body>
+    <div id="feedback">¡Respuesta incorrecta! Pierdes una vida ❤️</div>
+    
+    <div class="container">
+        <img id="logo" src="https://static.wixstatic.com/media/ed6298_a9feb3bc2f894f2fb14e07593db423e6~mv2.png/v1/fill/w_438,h_139,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/logo.png" alt="Logotipo">
+
+        <div id="start-screen">
+            <h1>Quiz de Pilates Elite</h1>
+            <p style="font-style: italic;">Demuestra tu maestría en el método</p>
+            <input type="text" id="player-name" class="input-field" placeholder="Tu nombre completo*" required>
+            <input type="email" id="player-email" class="input-field" placeholder="tu@email.com*" required>
+            <input type="tel" id="player-phone" class="input-field" placeholder="+34 600 000 000">
+            <button id="start-btn">COMENZAR</button>
+            <p style="font-size: 12px; color: var(--oro-claro);">* Campos obligatorios</p>
+        </div>
+
+        <div id="game-screen" class="hidden">
+            <h2 id="level">NIVEL: FÁCIL</h2>
+            <p id="question"></p>
+            <div class="options" id="options"></div>
+            <div style="margin-top: 30px;">
+                <p>❤️ Vidas: <span class="lives" id="lives">3</span></p>
+                <p>🏆 Puntuación: <span class="score" id="score">0</span></p>
+            </div>
+        </div>
+
+        <div id="end-screen" class="hidden">
+            <h1>FIN DEL JUEGO</h1>
+            <p id="final-score" style="font-size: 1.3em;">Tu puntuación: <span class="score">0</span></p>
+            <h2>RANKING</h2>
+            <div id="ranking"></div>
+            <button id="restart-btn">JUGAR DE NUEVO</button>
+        </div>
+    </div>
+
+    <!-- SDK EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <script>
+        // Base de datos de preguntas (15 preguntas difíciles para evitar empates)
+        const questions = {
+            easy: [
+                {
+                    question: "¿Cuál es el principio básico del Pilates que se enfoca en la zona abdominal?",
+                    options: ["Powerhouse", "Flexibilidad", "Resistencia"],
+                    answer: 0
+                },
+                {
+                    question: "¿Qué significa 'centro' en Pilates?",
+                    options: ["La parte superior del cuerpo", "El área entre las costillas y la pelvis (Powerhouse)", "Las piernas"],
+                    answer: 1
+                },
+                {
+                    question: "¿Cuál de estos es un beneficio principal del Pilates?",
+                    options: ["Aumentar la velocidad", "Mejorar la postura y alineación", "Ganar masa muscular rápidamente"],
+                    answer: 1
+                },
+                {
+                    question: "¿Qué tipo de respiración se usa en Pilates?",
+                    options: ["Respiración clavicular", "Respiración torácica lateral", "Respiración diafragmática"],
+                    answer: 1
+                },
+                {
+                    question: "¿En qué posición se suele empezar una clase de Pilates?",
+                    options: ["De pie", "Sentado en el Reformer", "Acostado en colchoneta (supino)"],
+                    answer: 2
+                }
+            ],
+            medium: [
+                {
+                    question: "¿Qué aparato fue inventado por Joseph Pilates para rehabilitación?",
+                    options: ["Pelota suiza", "Reformer", "Banda elástica"],
+                    answer: 1
+                },
+                {
+                    question: "¿Cuál NO es un principio del Pilates?",
+                    options: ["Respiración", "Concentración", "Velocidad"],
+                    answer: 2
+                },
+                {
+                    question: "¿Qué ejercicio clásico fortalece el abdomen y se hace con las piernas en 'mesa'?",
+                    options: ["The Hundred", "Single Leg Stretch", "Roll Up"],
+                    answer: 1
+                },
+                {
+                    question: "¿Qué músculos se activan principalmente en el ejercicio 'Swan Dive'?",
+                    options: ["Abdominales", "Espalda extensores", "Glúteos"],
+                    answer: 1
+                },
+                {
+                    question: "¿Cómo se llama el método original de Joseph Pilates?",
+                    options: ["Contrología", "Pilates Mat", "Stott Pilates"],
+                    answer: 0
+                }
+            ],
+            hard: [
+                {
+                    question: "¿Cuál de estos NO es un ejercicio clásico de Pilates?",
+                    options: ["The Hundred", "Downward Dog", "Roll Up"],
+                    answer: 1
+                },
+                {
+                    question: "¿En qué década Joseph Pilates llevó su método a Nueva York?",
+                    options: ["1920s", "1940s", "1960s"],
+                    answer: 0
+                },
+                {
+                    question: "¿Qué aparato de Pilates tiene resortes y una plataforma móvil?",
+                    options: ["Cadillac", "Chair (silla)", "Reformer"],
+                    answer: 2
+                },
+                {
+                    question: "¿Cuál es el propósito del 'Imprinting' en Pilates?",
+                    options: ["Aumentar la curvatura lumbar", "Mantener la columna neutra", "Estirar los isquiotibiales"],
+                    answer: 1
+                },
+                {
+                    question: "¿Qué modificó Romana Kryzanowska en el método Pilates original?",
+                    options: ["Añadió pesas", "Enfocó más en la rehabilitación", "Introdujo secuencias para principiantes"],
+                    answer: 2
+                },
+                // 10 preguntas adicionales para el nivel difícil
+                {
+                    question: "¿Qué músculo es el principal estabilizador en el ejercicio 'Teaser'?",
+                    options: ["Recto abdominal", "Transverso abdominal", "Psoas ilíaco"],
+                    answer: 1
+                },
+                {
+                    question: "¿Cuál es el ángulo ideal de las piernas en la posición 'Table Top'?",
+                    options: ["45 grados", "90 grados", "120 grados"],
+                    answer: 1
+                },
+                {
+                    question: "¿Qué variante de Pilates se enfoca más en la alineación vertebral?",
+                    options: ["Stott Pilates", "Pilates Clásico", "Winsor Pilates"],
+                    answer: 0
+                },
+                {
+                    question: "¿Cuál es el objetivo principal del ejercicio 'Mermaid'?",
+                    options: ["Movilidad torácica", "Fuerza de brazos", "Estabilidad pélvica"],
+                    answer: 0
+                },
+                {
+                    question: "¿En qué posición deben estar las escápulas durante el 'Hundred'?",
+                    options: ["Deprimidas y protraídas", "Elevadas y retraídas", "Neutras y estables"],
+                    answer: 0
+                }
+            ]
+        };
+
+        // Variables del juego
+        let playerName = "";
+        let playerEmail = "";
+        let playerPhone = "";
+        let currentLevel = "easy";
+        let currentQuestion = 0;
+        let lives = 3;
+        let score = 0;
+        let ranking = JSON.parse(localStorage.getItem("ranking")) || [];
+
+        // Elementos del DOM
+        const startScreen = document.getElementById("start-screen");
+        const gameScreen = document.getElementById("game-screen");
+        const endScreen = document.getElementById("end-screen");
+        const playerNameInput = document.getElementById("player-name");
+        const playerEmailInput = document.getElementById("player-email");
+        const playerPhoneInput = document.getElementById("player-phone");
+        const startBtn = document.getElementById("start-btn");
+        const levelDisplay = document.getElementById("level");
+        const questionDisplay = document.getElementById("question");
+        const optionsContainer = document.getElementById("options");
+        const livesDisplay = document.getElementById("lives");
+        const scoreDisplay = document.getElementById("score");
+        const finalScoreDisplay = document.getElementById("final-score");
+        const rankingDisplay = document.getElementById("ranking");
+        const restartBtn = document.getElementById("restart-btn");
+        const feedback = document.getElementById("feedback");
+
+        // Inicializa EmailJS (REMPLAZA CON TU USER ID)
+        emailjs.init('service_4wuwnqu');
+
+        // Función para enviar resultados por email
+        function sendResultsToEmail() {
+            const templateParams = {
+                player_name: playerName,
+                player_email: playerEmail,
+                player_phone: playerPhone || "No proporcionado",
+                player_score: score,
+                date: new Date().toLocaleDateString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })
+            };
+
+            emailjs.send('outlook', 'Resultados_Quiz', templateParams)
+                .then(() => {
+                    console.log('✅ Email enviado correctamente');
+                }, (error) => {
+                    console.error('❌ Error al enviar:', error);
+                });
+        }
+
+        // Validaciones
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function isValidPhone(phone) {
+            return phone === "" || /^[+]?[\s0-9]{7,}$/.test(phone);
+        }
+
+        // Iniciar juego
+        startBtn.addEventListener("click", () => {
+            playerName = playerNameInput.value.trim();
+            playerEmail = playerEmailInput.value.trim();
+            playerPhone = playerPhoneInput.value.trim();
+
+            if (!playerName) {
+                alert("¡Por favor ingresa tu nombre completo!");
+                return;
+            }
+
+            if (!isValidEmail(playerEmail)) {
+                alert("¡Por favor ingresa un email válido!");
+                return;
+            }
+
+            if (!isValidPhone(playerPhone)) {
+                alert("¡Por favor ingresa un teléfono válido o déjalo vacío!");
+                return;
+            }
+
+            startScreen.classList.add("hidden");
+            gameScreen.classList.remove("hidden");
+            loadQuestion();
+        });
+
+        // Cargar pregunta
+        function loadQuestion() {
+            const levelQuestions = questions[currentLevel];
+            if (currentQuestion >= levelQuestions.length) {
+                nextLevel();
+                return;
+            }
+
+            const question = levelQuestions[currentQuestion];
+            questionDisplay.textContent = question.question;
+            optionsContainer.innerHTML = "";
+
+            question.options.forEach((option, index) => {
+                const button = document.createElement("button");
+                button.textContent = option;
+                button.classList.add("option-btn");
+                button.addEventListener("click", () => checkAnswer(index));
+                optionsContainer.appendChild(button);
+            });
+
+            levelDisplay.textContent = `Nivel: ${currentLevel === "easy" ? "Fácil" : currentLevel === "medium" ? "Medio" : "Difícil"}`;
+            livesDisplay.textContent = lives;
+            scoreDisplay.textContent = score;
+        }
+
+        // Verificar respuesta
+        function checkAnswer(selectedIndex) {
+            const correctIndex = questions[currentLevel][currentQuestion].answer;
+            if (selectedIndex === correctIndex) {
+                score += currentLevel === "easy" ? 10 : currentLevel === "medium" ? 20 : 30;
+                scoreDisplay.textContent = score;
+                currentQuestion++;
+                loadQuestion();
+            } else {
+                // Mostrar feedback de error
+                feedback.style.display = "block";
+                setTimeout(() => {
+                    feedback.style.display = "none";
+                }, 2000);
+                
+                lives--;
+                livesDisplay.textContent = lives;
+                if (lives <= 0) {
+                    endGame();
+                } else {
+                    currentQuestion++;
+                    loadQuestion();
+                }
+            }
+        }
+
+        // Pasar al siguiente nivel
+        function nextLevel() {
+            if (currentLevel === "easy") {
+                currentLevel = "medium";
+            } else if (currentLevel === "medium") {
+                currentLevel = "hard";
+            } else {
+                endGame();
+                return;
+            }
+            currentQuestion = 0;
+            loadQuestion();
+        }
+
+        // Terminar juego
+        function endGame() {
+            gameScreen.classList.add("hidden");
+            endScreen.classList.remove("hidden");
+            finalScoreDisplay.textContent = `Tu puntuación: ${score}`;
+
+            // Sistema de desempate con decimales ocultos
+            const scoreWithDecimal = score + (Math.random() * 0.99);
+
+            ranking.push({
+                name: playerName,
+                email: playerEmail,
+                phone: playerPhone,
+                score: score,
+                preciseScore: scoreWithDecimal
+            });
+
+            // Ordenar por puntuación precisa
+            ranking.sort((a, b) => b.preciseScore - a.preciseScore);
+
+            // Mostrar ranking (solo puntuación entera)
+            rankingDisplay.innerHTML = "";
+            ranking.slice(0, 10).forEach((player, index) => {
+                const p = document.createElement("p");
+                p.textContent = `${index + 1}. ${player.name}: ${player.score}`;
+                rankingDisplay.appendChild(p);
+            });
+
+            // Guardar en localStorage (sin decimales)
+            localStorage.setItem("ranking", JSON.stringify(
+                ranking.map(item => ({
+                    name: item.name,
+                    score: item.score
+                }))
+            ));
+            
+            // Enviar resultados por email
+            sendResultsToEmail();
+        }
+
+        // Reiniciar juego
+        restartBtn.addEventListener("click", () => {
+            currentLevel = "easy";
+            currentQuestion = 0;
+            lives = 3;
+            score = 0;
+            endScreen.classList.add("hidden");
+            startScreen.classList.remove("hidden");
+        });
+    </script>
+</body>
+</html>
